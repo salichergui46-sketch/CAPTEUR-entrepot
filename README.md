@@ -260,15 +260,7 @@ Ce projet est sous licence **MIT** - voir le fichier LICENSE pour plus de détai
 - 🐛 Issues: [GitHub Issues](https://github.com/VotreUsername/Capteur-Entrepot/issues)
 - 💬 Discussions: [GitHub Discussions](https://github.com/VotreUsername/Capteur-Entrepot/discussions)
 
-## 🎯 Roadmap
 
-- [ ] Application mobile (React Native)
-- [ ] Intégration IoT physique
-- [ ] Rapports avancés
-- [ ] Notifications email/SMS
-- [ ] API REST complète
-- [ ] Dashboard admin avancé
-- [ ] Multi-langue
 
 ## 📚 Documentation
 
