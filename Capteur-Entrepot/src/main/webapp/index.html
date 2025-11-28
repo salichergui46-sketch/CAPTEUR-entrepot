@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surveillance des Entrepôts</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-card i {
+            font-size: 2em;
+            color: #667eea;
+        }
+
+        .entrepots-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .entrepot-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .entrepot-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .entrepot-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .entrepot-card.danger {
+            border-left: 5px solid #e74c3c;
+        }
+
+        .entrepot-card.danger::before {
+            background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .card-header {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-header i {
+            color: #667eea;
+            font-size: 1.5em;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .metric:hover {
+            transform: scale(1.05);
+        }
+
+        .metric-label {
+            font-size: 0.85em;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+        }
+
+        .metric-unit {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.8);
+            margin-left: 5px;
+        }
+
+        .metric-seuil {
+            font-size: 0.75em;
+            color: rgba(255,255,255,0.7);
+            margin-top: 5px;
+        }
+
+        .temperature {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .temperature.alert {
+            background: linear-gradient(135deg, #d63031 0%, #c52a2f 100%);
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 10px rgba(214, 48, 49, 0.5);
+        }
+
+        .humidity {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+        }
+
+        .humidity.alert {
+            background: linear-gradient(135deg, #0984e3 0%, #0770d3 100%);
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 10px rgba(9, 132, 227, 0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-ok {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-alert {
+            background: #f8d7da;
+            color: #721c24;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .card-footer {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 0.85em;
+            color: #7f8c8d;
+        }
+
+        .last-update {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+        }
+
+        .edit-btn, .delete-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            width: 48%;
+        }
+
+        .delete-btn {
+            background: #e74c3c;
+        }
+
+        .edit-btn:hover {
+            background: #2980b9;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+
+        .edit-form {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .edit-form.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .edit-form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 10px;
+        }
+
+        .edit-form-group label {
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .edit-form-group input {
+            padding: 8px 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+        }
+
+        .edit-form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .edit-form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .save-btn, .cancel-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background: #27ae60;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #229954;
+        }
+
+        .cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .cancel-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .alertes-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .alertes-section h2 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+        }
+
+        .alertes-section h2 i {
+            font-size: 1.5em;
+        }
+
+        .alertes-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .alerte-item {
+            background: linear-gradient(135deg, #ffe6e6 0%, #ffcccc 100%);
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alerte-time {
+            font-size: 0.85em;
+            color: #e74c3c;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .alerte-message {
+            color: #c0392b;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #95a5a6;
+        }
+
+        .empty-state i {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .entrepots-container {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8em;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #27ae60;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-warehouse"></i> Surveillance des Entrepôts</h1>
+            <p><span class="live-indicator"><span class="live-dot"></span>Monitoring en temps réel</span></p>
+        </header>
+
+        <div class="stats-section">
+            <div class="stat-card">
+                <i class="fas fa-building"></i>
+                <div class="stat-label">Entrepôts Actifs</div>
+                <div class="stat-number" id="statEntrepots">0</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div class="stat-label">Alertes Actives</div>
+                <div class="stat-number" id="statAlertes" style="color: #e74c3c;">0</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="stat-label">État Normal</div>
+                <div class="stat-number" id="statNormal" style="color: #27ae60;">0</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2><i class="fas fa-plus-circle"></i> Ajouter / Modifier Capteur</h2>
+            <form id="formulaire">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="entrepotSelect"><i class="fas fa-building"></i> Entrepôt</label>
+                        <select id="entrepotSelect" required>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="Entrepot_Nord">📍 Entrepôt Nord</option>
+                            <option value="Entrepot_Sud">📍 Entrepôt Sud</option>
+                            <option value="Entrepot_Est">📍 Entrepôt Est</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="temperature"><i class="fas fa-thermometer-half"></i> Température (°C)</label>
+                        <input type="number" id="temperature" placeholder="Ex: 25.5" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="humidite"><i class="fas fa-droplet"></i> Humidité (%)</label>
+                        <input type="number" id="humidite" placeholder="Ex: 60" step="0.1" min="0" max="100" required>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-paper-plane"></i> Ajouter/Modifier
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <h2 style="color: white; margin-bottom: 20px;"><i class="fas fa-tv"></i> État des Entrepôts en Temps Réel</h2>
+        <div class="entrepots-container" id="entrepots"></div>
+
+        <div class="alertes-section">
+            <h2><i class="fas fa-exclamation-triangle"></i> Alertes en Temps Réel</h2>
+            <div class="alertes-list" id="alertes">
+                <div class="empty-state" id="emptyAlertes">
+                    <i class="fas fa-check-circle"></i>
+                    <p>Aucune alerte pour le moment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SEUIL_TEMPERATURE = 30;
+        const SEUIL_HUMIDITE = 70;
+        let db;
+        let cards = {};
+        let alertesMap = {};
+        let entrepotStats = {};
+
+        function updateStats() {
+            const total = Object.keys(cards).length;
+            let alertCount = 0;
+            let normalCount = 0;
+
+            Object.values(entrepotStats).forEach(stat => {
+                if (stat.hasAlert) alertCount++;
+                else normalCount++;
+            });
+
+            document.getElementById("statEntrepots").textContent = total;
+            document.getElementById("statAlertes").textContent = alertCount;
+            document.getElementById("statNormal").textContent = normalCount;
+        }
+
+        function editCard(key) {
+            const card = cards[key];
+            const form = card.querySelector(".edit-form");
+            form.classList.add("show");
+        }
+
+        function cancelEdit(key) {
+            const card = cards[key];
+            const form = card.querySelector(".edit-form");
+            form.classList.remove("show");
+        }
+
+        function saveEdit(key) {
+            const card = cards[key];
+            const tempInput = card.querySelector(".edit-temp");
+            const humInput = card.querySelector(".edit-hum");
+            
+            const temp = parseFloat(tempInput.value);
+            const hum = parseFloat(humInput.value);
+
+            if (isNaN(temp) || isNaN(hum) || temp < -50 || temp > 50 || hum < 0 || hum > 100) {
+                alert("Valeurs invalides ! Temp: -50 à 50°C, Humidité: 0 à 100%");
+                return;
+            }
+
+            db.ref("/entrepots/" + key).update({ 
+                temperature: temp, 
+                humidite: hum,
+                lastUpdated: Date.now()
+            }).then(() => {
+                cancelEdit(key);
+            }).catch(err => {
+                alert("Erreur : " + err.message);
+            });
+        }
+
+        function deleteCard(key) {
+            if (confirm("Êtes-vous sûr de vouloir supprimer " + key + " ?")) {
+                db.ref("/entrepots/" + key).remove();
+            }
+        }
+
+        window.onload = function() {
+            try {
+                var firebaseConfig = {
+                    apiKey: "AIzaSyBSearU1pe__HFbbItibXQXuWy6yNXW0ng",
+                    authDomain: "capteur-c8a92.firebaseapp.com",
+                    databaseURL: "https://capteur-c8a92-default-rtdb.europe-west1.firebasedatabase.app",
+                    projectId: "capteur-c8a92",
+                    storageBucket: "capteur-c8a92.firebasestorage.app",
+                    messagingSenderId: "56596738979",
+                    appId: "1:56596738979:web:f92c515d58384e25f8a016"
+                };
+
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                var container = document.getElementById("entrepots");
+                var alertesContainer = document.getElementById("alertes");
+
+                function updateCard(key, data) {
+                    if (!data) return;
+
+                    let card = cards[key];
+                    if (!card) {
+                        card = document.createElement("div");
+                        card.className = "entrepot-card";
+                        card.id = "card-" + key;
+                        container.appendChild(card);
+                        cards[key] = card;
+                    }
+
+                    const temp = data.temperature != null ? parseFloat(data.temperature) : 0;
+                    const humid = data.humidite != null ? parseFloat(data.humidite) : 0;
+                    
+                    let tempAlert = temp > SEUIL_TEMPERATURE;
+                    let humAlert = humid > SEUIL_HUMIDITE;
+                    let hasAlert = tempAlert || humAlert;
+
+                    // Mise à jour des stats
+                    entrepotStats[key] = { hasAlert };
+                    updateStats();
+
+                    if (hasAlert) {
+                        card.classList.add("danger");
+                    } else {
+                        card.classList.remove("danger");
+                    }
+
+                    const lastUpdate = data.lastUpdated ? new Date(data.lastUpdated).toLocaleTimeString() : "N/A";
+                    const tempDisplay = temp.toFixed(1);
+                    const humidDisplay = humid.toFixed(1);
+
+                    card.innerHTML = `
+                        <div class="card-header">
+                            <i class="fas fa-building"></i>
+                            ${key}
+                        </div>
+                        <div class="metrics-grid">
+                            <div class="metric temperature ${tempAlert ? 'alert' : ''}">
+                                <div class="metric-label"><i class="fas fa-thermometer-half"></i> Température</div>
+                                <div class="metric-value">${tempDisplay}<span class="metric-unit">°C</span></div>
+                                <div class="metric-seuil">Seuil: ${SEUIL_TEMPERATURE}°C</div>
+                            </div>
+                            <div class="metric humidity ${humAlert ? 'alert' : ''}">
+                                <div class="metric-label"><i class="fas fa-droplet"></i> Humidité</div>
+                                <div class="metric-value">${humidDisplay}<span class="metric-unit">%</span></div>
+                                <div class="metric-seuil">Seuil: ${SEUIL_HUMIDITE}%</div>
+                            </div>
+                        </div>
+                        <div class="status-badge ${hasAlert ? 'status-alert' : 'status-ok'}">
+                            ${hasAlert ? '⚠️ ALERTE ACTIVE' : '✅ NORMAL'}
+                        </div>
+                        <div class="card-footer">
+                            <div class="last-update">
+                                <span><i class="fas fa-clock"></i> ${lastUpdate}</span>
+                            </div>
+                            <button class="edit-btn" onclick="editCard('${key}')"><i class="fas fa-edit"></i> Modifier</button>
+                            <button class="delete-btn" onclick="deleteCard('${key}')"><i class="fas fa-trash"></i> Supprimer</button>
+                        </div>
+                        <div class="edit-form">
+                            <div class="edit-form-group">
+                                <label>Température (°C)</label>
+                                <input type="number" class="edit-temp" value="${tempDisplay}" step="0.1">
+                            </div>
+                            <div class="edit-form-group">
+                                <label>Humidité (%)</label>
+                                <input type="number" class="edit-hum" value="${humidDisplay}" step="0.1" min="0" max="100">
+                            </div>
+                            <div class="edit-form-actions">
+                                <button class="save-btn" onclick="saveEdit('${key}')"><i class="fas fa-save"></i> Enregistrer</button>
+                                <button class="cancel-btn" onclick="cancelEdit('${key}')"><i class="fas fa-times"></i> Annuler</button>
+                            </div>
+                        </div>
+                    `;
+
+                    // Créer une alerte si dépassement
+                    if (tempAlert) {
+                        const alertKey = key + "_temp";
+                        if (!alertesMap[alertKey]) {
+                            addAlerte(key, "Température", temp, SEUIL_TEMPERATURE);
+                            alertesMap[alertKey] = true;
+                        }
+                    } else {
+                        delete alertesMap[key + "_temp"];
+                    }
+
+                    if (humAlert) {
+                        const alertKey = key + "_hum";
+                        if (!alertesMap[alertKey]) {
+                            addAlerte(key, "Humidité", humid, SEUIL_HUMIDITE);
+                            alertesMap[alertKey] = true;
+                        }
+                    } else {
+                        delete alertesMap[key + "_hum"];
+                    }
+                }
+
+                function removeCard(key) {
+                    let card = cards[key];
+                    if (card) {
+                        card.remove();
+                        delete cards[key];
+                        delete entrepotStats[key];
+                        updateStats();
+                    }
+                }
+
+                function addAlerte(entrepot, type, valeur, seuil) {
+                    const alerte = { entrepot, type, valeur, seuil, timestamp: Date.now() };
+                    db.ref("/alertes").push(alerte);
+
+                    const date = new Date().toLocaleTimeString();
+                    const li = document.createElement("div");
+                    li.className = "alerte-item";
+                    li.innerHTML = `
+                        <div class="alerte-time"><i class="fas fa-clock"></i> ${date}</div>
+                        <div class="alerte-message">⚠️ <strong>${entrepot}</strong> - ${type}: <strong>${valeur.toFixed(1)}</strong> (Seuil: ${seuil})</div>
+                    `;
+                    alertesContainer.prepend(li);
+                    
+                    if (document.getElementById("emptyAlertes")) {
+                        document.getElementById("emptyAlertes").remove();
+                    }
+                }
+
+                // Écoute en temps réel
+                var ref = db.ref("/entrepots");
+                ref.on("child_added", snapshot => {
+                    updateCard(snapshot.key, snapshot.val());
+                });
+                ref.on("child_changed", snapshot => {
+                    updateCard(snapshot.key, snapshot.val());
+                });
+                ref.on("child_removed", snapshot => {
+                    removeCard(snapshot.key);
+                });
+
+            } catch (e) {
+                alert("Erreur : " + e.message);
+                console.error(e);
+            }
+        };
+    </script>
+</body>
+</html>

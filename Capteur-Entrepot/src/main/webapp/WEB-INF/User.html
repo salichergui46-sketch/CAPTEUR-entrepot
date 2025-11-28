@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulaire de Connexion</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f1f2f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    form {
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      width: 300px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2f3542;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      color: #2f3542;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #1e90ff;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background-color: #1e90ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #74b9ff;
+    }
+
+    #message {
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <form id="loginForm" onsubmit= "return verifierFormulaire()">
+    <h2>Connexion</h2>
+
+    <label for="username">Nom d'utilisateur :</label>
+    <input type="text" id="username" name="username" placeholder="Entrez votre nom">
+
+    <label for="password">Mot de passe :</label>
+    <input type="password" id="password" name="password" placeholder="Entrez votre mot de passe">
+
+    <button type="submit">Se connecter</button>
+
+    <p id="message"></p>
+  </form>
+
+  <script>
+  function verifierFormulaire() {
+	  const username = document.getElementById("username").value.trim();
+	  const password = document.getElementById("password").value.trim();
+	  const message = document.getElementById("message");
+
+	  if (username === "" || password === "") {
+	    message.textContent = "⚠️ Veuillez remplir tous les champs.";
+	    message.style.color = "red";
+	    return false; // empêche l’envoi du formulaire
+	  }
+
+	  if (username === "admin" && password === "1234") {
+	    message.textContent = "✅ Connexion réussie !";
+	    message.style.color = "green";
+
+	    // 🔁 Rediriger vers la page des entrepôts après 1 seconde
+	    setTimeout(() => {
+	      window.location.href = "entrepots.html";
+	    }, 1000);
+
+	  } else {
+	    message.textContent = "❌ Identifiants incorrects.";
+	    message.style.color = "red";
+	  }
+
+	  return false; // empêcher le rechargement de la page
+	}
+
+  </script>
+
+</body>
+</html>

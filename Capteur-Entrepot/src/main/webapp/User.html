@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - Système de Monitoring</title>
+
+  <!-- Font Awesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 20px;
+      padding: 50px 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      animation: slideUp 0.6s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .login-header i {
+      font-size: 3.5em;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .login-header h1 {
+      color: #2f3542;
+      font-size: 2em;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .login-header p {
+      color: #95a5a6;
+      font-size: 0.95em;
+      margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      animation: fadeInLeft 0.6s ease both;
+    }
+
+    .form-group:nth-child(1) {
+      animation-delay: 0.1s;
+    }
+
+    .form-group:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    @keyframes fadeInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: #2f3542;
+      font-weight: 600;
+      font-size: 0.95em;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    label i {
+      margin-right: 8px;
+      color: #667eea;
+      width: 18px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #ecf0f1;
+      border-radius: 10px;
+      font-size: 1em;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+
+    input::placeholder {
+      color: #bdc3c7;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 25px;
+      font-size: 0.9em;
+      color: #7f8c8d;
+    }
+
+    .remember-me input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+      accent-color: #667eea;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+      animation: fadeInUp 0.6s ease 0.3s both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    }
+
+    .submit-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .submit-btn.loading {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      text-align: center;
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .message i {
+      margin-right: 8px;
+    }
+
+    .signup-link {
+      text-align: center;
+      margin-top: 20px;
+      color: #7f8c8d;
+      font-size: 0.9em;
+    }
+
+    .signup-link a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    .signup-link a:hover {
+      color: #764ba2;
+      text-decoration: underline;
+    }
+
+    .password-toggle {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #7f8c8d;
+      font-size: 1.1em;
+      transition: color 0.3s ease;
+      margin-top: 2px;
+    }
+
+    .toggle-password:hover {
+      color: #667eea;
+    }
+
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 35px 25px;
+      }
+
+      .login-header h1 {
+        font-size: 1.5em;
+      }
+
+      .login-header i {
+        font-size: 2.5em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <form id="loginForm" class="login-card" onsubmit="return verifierFormulaire()">
+      <div class="login-header">
+        <i class="fas fa-warehouse"></i>
+        <h1>Connexion</h1>
+        <p>Système de Monitoring d'Entrepôts</p>
+      </div>
+
+      <div class="form-group">
+        <label for="username">
+          <i class="fas fa-user"></i>Nom d'utilisateur
+        </label>
+        <input 
+          type="text" 
+          id="username" 
+          name="username" 
+          placeholder="admin"
+          autocomplete="username"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">
+          <i class="fas fa-lock"></i>Mot de passe
+        </label>
+        <div class="password-toggle">
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          >
+          <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
+        </div>
+      </div>
+
+      <div class="remember-me">
+        <input type="checkbox" id="remember" name="remember">
+        <label for="remember" style="margin: 0; text-transform: none; letter-spacing: normal;">
+          Se souvenir de moi
+        </label>
+      </div>
+
+      <button type="submit" class="submit-btn">
+        <i class="fas fa-sign-in-alt"></i> Se connecter
+      </button>
+
+      <div id="message" class="message"></div>
+
+      <div class="signup-link">
+        Besoin d'aide ? <a href="#"><i class="fas fa-question-circle"></i>Contactez l'administrateur</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const passwordInput = document.getElementById("password");
+      const toggleIcon = document.querySelector(".toggle-password");
+      
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.classList.remove("fa-eye");
+        toggleIcon.classList.add("fa-eye-slash");
+      } else {
+        passwordInput.type = "password";
+        toggleIcon.classList.remove("fa-eye-slash");
+        toggleIcon.classList.add("fa-eye");
+      }
+    }
+
+    function verifierFormulaire() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value.trim();
+      const messageDiv = document.getElementById("message");
+      const submitBtn = document.querySelector(".submit-btn");
+
+      // Vérification des champs vides
+      if (user === "" || pass === "") {
+        messageDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Veuillez remplir tous les champs !';
+        messageDiv.classList.add("show", "error");
+        messageDiv.classList.remove("success");
+        return false;
+      }
+
+      // Vérification des identifiants
+      if (user === "admin" && pass === "1234") {
+        messageDiv.innerHTML = '<i class="fas fa-check-circle"></i> Connexion réussie ! Redirection en cours...';
+        messageDiv.classList.add("show", "success");
+        messageDiv.classList.remove("error");
+
+        submitBtn.classList.add("loading");
+        submitBtn.disabled = true;
+
+        // Redirection après 2 secondes
+        setTimeout(() => {
+          window.location.href = "entrepot.html";
+        }, 2000);
+
+        return false;
+      } else {
+        messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Identifiants incorrects !';
+        messageDiv.classList.add("show", "error");
+        messageDiv.classList.remove("success");
+        return false;
+      }
+    }
+
+    // Permettre l'appui sur Entrée
+    document.getElementById("loginForm").addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        verifierFormulaire();
+      }
+    });
+  </script>
+</body>
+</html>
+</html>
